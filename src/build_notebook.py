@@ -68,11 +68,14 @@ that conclusion can be checked rather than taken on trust.
 cells.append(md(r"""
 ## How to run this
 
-**Reviewer path.** Upload `alpha7_artifacts.zip` and the three `.py` files
-shipped with this notebook to `/content` (folder icon, left sidebar), then
-*Runtime → Restart session and run all*. Nothing is read from anyone's Google
-Drive. Leave the runtime on **CPU**: AutoDock Vina has no GPU code path, so a
-GPU runtime gives no speedup.
+**Reviewer path.** *Runtime → Restart session and run all*. The run archive is
+downloaded automatically from the public repository, so nothing needs to be
+uploaded and nothing is read from anyone's Google Drive. If the download is
+unavailable, put `alpha7_artifacts.zip` in `/content` yourself (folder icon,
+left sidebar) and run again. Leave the runtime on **CPU**: AutoDock Vina has no
+GPU code path, so a GPU runtime gives no speedup.
+
+Code and data: `github.com/RayanAbdelaziz01/alpha7-pam-crossdocking`
 
 - `RECOMPUTE = False` (default) reproduces every table and figure from the
   archived per-run outputs. About a minute.
@@ -225,7 +228,8 @@ import urllib.request
 import zipfile
 
 DATA_DIR     = "/content/alpha7_data"   # archive is unpacked here
-ARTIFACT_URL = ""                       # optional public URL to the archive
+ARTIFACT_URL = ("https://github.com/RayanAbdelaziz01/alpha7-pam-crossdocking"
+                "/raw/main/alpha7_artifacts.zip")
 USE_DRIVE    = False                    # author-only fallback
 
 WORK  = {1: "/content/alpha7_matrix",       # arm 1 working directory
@@ -256,9 +260,15 @@ def resolve_data():
             return DATA_DIR, os.path.join(DATA_DIR, "arm2_pdb2pqr"), "zip " + hits[0]
 
     if ARTIFACT_URL:
+        # A failed download must not mask the instructions below, so the
+        # error is reported and the resolver falls through rather than
+        # raising a bare HTTPError from inside urlretrieve.
         local = "/content/alpha7_artifacts.zip"
-        urllib.request.urlretrieve(ARTIFACT_URL, local)
-        _unzip(local)
+        try:
+            urllib.request.urlretrieve(ARTIFACT_URL, local)
+            _unzip(local)
+        except Exception as exc:
+            print("could not fetch the archive from ARTIFACT_URL (%s)" % exc)
         if _ok(DATA_DIR):
             return DATA_DIR, os.path.join(DATA_DIR, "arm2_pdb2pqr"), "url"
 

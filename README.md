@@ -24,11 +24,12 @@ runtime (AutoDock Vina has no GPU code path, so a GPU runtime gives no speedup).
 
 **Default path (`RECOMPUTE = False`), about a minute.** Every table, figure and
 number in the manuscript is re-derived from the archived per-run outputs. The
-notebook resolves the archive in this order and stops at the first hit:
+archive is downloaded from this repository automatically, so nothing needs to be
+uploaded. The notebook resolves it in this order and stops at the first hit:
 
 1. `/content/alpha7_data` already unpacked
 2. `alpha7_artifacts.zip` present in `/content`
-3. the `ARTIFACT_URL` set in the notebook
+3. `ARTIFACT_URL` — set to `alpha7_artifacts.zip` in this repository
 4. Google Drive — **off by default** (`USE_DRIVE = False`); nothing is read from
    anyone's personal cloud storage
 
@@ -89,9 +90,9 @@ src/pose_provenance.py                   identifies which arm a pose set came fr
 main.tex, references.bib                 manuscript source
 ```
 
-`alpha7_artifacts.zip` is attached to the repository's release. It carries the
-per-run checkpoints, all 1,440 poses, the analysis tables, the figures and a
-manifest with a SHA-256 for every entry.
+`alpha7_artifacts.zip` sits at the repository root. It carries the per-run
+checkpoints, all 1,440 poses, the analysis tables, the figures and
+`ARCHIVE_MANIFEST.json`, a manifest with a SHA-256 for every entry.
 
 ## Data sources
 

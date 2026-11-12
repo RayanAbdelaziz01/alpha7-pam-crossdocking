@@ -31,6 +31,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -75,7 +76,7 @@ PH = 7.4
 RMSD_CUTOFF = 2.0
 VINA_CPU = 2
 
-# Regression target: the five rank-1 and rank-2 RMSDs recorded in the
+# Regression target: the rank-1 and rank-2 RMSDs recorded in the
 # Module 7 checkpoint for PNU-120596 redocked into cognate 8V82.
 REGRESSION = {
     "rank1_range": (6.40, 6.46),
@@ -120,6 +121,81 @@ def run_tool(args, log_name):
     return proc.stdout
 
 
+def run_tool_soft(args, log_name):
+    """Run a tool without raising; return (returncode, combined output)."""
+    args = [str(a) for a in args]
+    args[0] = str(Path(sys.executable).parent / args[0])
+    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, cwd=str(RUN_DIR))
+    (WORK / log_name).write_text(proc.stdout)
+    return proc.returncode, proc.stdout
+
+
+def residue_com_distance_from_box(pdb_path, key):
+    """Distance from a residue's centre of mass to the docking box region."""
+    if ":" not in key:
+        return None
+    chain, num = key.split(":", 1)
+    num = num.strip()
+    rows = [l for l in open(pdb_path)
+            if l.startswith(("ATOM", "HETATM"))
+            and l[21] == chain and l[22:26].strip() == num]
+    if not rows:
+        return None
+    xyz = np.array([[float(l[30:38]), float(l[38:46]), float(l[46:54])]
+                    for l in rows])
+    com = xyz.mean(axis=0)
+    outside = np.maximum(
+        np.abs(com - np.array(BOX["center"])) - np.array(BOX["size"]) / 2.0, 0.0)
+    return float(np.linalg.norm(outside))
+
+
+def meeko_receptor_with_retries(pdb, prepared, prefix, max_tries=12):
+    """Prepare a receptor, dropping only unbuildable residues outside the box."""
+    dropped = []
+    for _ in range(max_tries):
+        args = ["mk_prepare_receptor.py", "--read_pdb", prepared,
+                "-o", prefix, "-p"]
+        code, out = run_tool_soft(args, "meeko_receptor_%s.log" % pdb)
+        if code == 0:
+            if dropped:
+                log("  %s: dropped %d residue(s) outside the box: %s"
+                    % (pdb, len(dropped), ", ".join(dropped)))
+            return dropped
+        found = re.search(r"corresponding to key (\S+)", out)
+        if not found:
+            print(out[-3000:], flush=True)
+            raise RuntimeError(
+                "%s: receptor preparation failed without a residue key" % pdb)
+        key = found.group(1).strip().rstrip(".,")
+        if key in dropped:
+            raise RuntimeError("%s: residue %s still failing after deletion"
+                               % (pdb, key))
+        distance = residue_com_distance_from_box(prepared, key)
+        if distance is None:
+            raise RuntimeError("%s: cannot locate unbuildable residue %s"
+                               % (pdb, key))
+        if distance < 8.0:
+            raise RuntimeError(
+                "%s: unbuildable residue %s lies %.2f A from the docking box; "
+                "refusing to silently drop a binding-site residue"
+                % (pdb, key, distance))
+        log("  %s: residue %s unbuildable, %.1f A outside the box - deleting"
+            % (pdb, key, distance))
+        _chain, _num = key.split(":", 1)
+        _num = _num.strip()
+        _lines = Path(prepared).read_text().splitlines(True)
+        _kept = [l for l in _lines
+                 if not (l.startswith(("ATOM", "HETATM"))
+                         and l[21] == _chain and l[22:26].strip() == _num)]
+        if len(_kept) == len(_lines):
+            raise RuntimeError("%s: no atom records matched residue %s"
+                               % (pdb, key))
+        Path(prepared).write_text("".join(_kept))
+        dropped.append(key)
+    raise RuntimeError("%s: too many unbuildable residues: %s" % (pdb, dropped))
+
+
 def write_status(payload):
     (DRIVE_OUT / "matrix_status.json").write_text(json.dumps(payload, indent=1))
 
@@ -129,7 +205,7 @@ def write_status(payload):
 # --------------------------------------------------------------------------
 
 def interface_pam_copy(structure, ccd):
-    """Return (chain, seqid) of the PAM copy sitting at the A-B interface.
+    """Return (chain, seqid, dist_A, dist_B) of the PAM copy at the A-B interface.
 
     The PAM site is a transmembrane intersubunit pocket, so the correct copy
     is the one with atoms close to both chain A and chain B. Chosen by
@@ -242,9 +318,8 @@ def ab_backbone(structure):
 def superpose_to_reference(mobile, reference):
     """Superpose `mobile` onto `reference` on matched A-B CA atoms.
 
-    Returns (transform, rmsd, n_matched). The transform is applied in place
-    to every atom of `mobile`, so the whole deposit - protein and ligands -
-    moves into the reference frame together.
+    The transform is applied in place to every atom of `mobile`, so the whole
+    deposit - protein and ligands together - moves into the reference frame.
     """
     mob_ca, ref_ca = ab_backbone(mobile), ab_backbone(reference)
     shared = sorted(set(mob_ca) & set(ref_ca))
@@ -263,7 +338,7 @@ def superpose_to_reference(mobile, reference):
 
 
 # --------------------------------------------------------------------------
-# receptor preparation
+# receptor and ligand preparation
 # --------------------------------------------------------------------------
 
 def prepare_receptor(pdb, structure):
@@ -302,10 +377,20 @@ def prepare_receptor(pdb, structure):
     with prepared.open("w") as fh:
         PDBFile.writeFile(fixer.topology, fixer.positions, fh, keepIds=True)
 
+    # PDBFixer caps chain termini with OXT, which is absent from Meeko's
+    # internal-residue templates and triggers a valence error. No OXT atom is
+    # anywhere near the transmembrane PAM site.
+    _lines = prepared.read_text().splitlines(True)
+    _kept = [l for l in _lines
+             if not (l.startswith(("ATOM", "HETATM"))
+                     and l[12:16].strip() == "OXT")]
+    if len(_kept) != len(_lines):
+        log(f"  {pdb}: removed {len(_lines) - len(_kept)} OXT cap atom(s)")
+    prepared.write_text("".join(_kept))
+
     prefix = WORK / f"{pdb}_AB_receptor"
     pdbqt = WORK / f"{pdb}_AB_receptor.pdbqt"
-    run_tool(["mk_prepare_receptor.py", "--read_pdb", prepared, "-o", prefix, "-p"],
-             f"meeko_receptor_{pdb}.log")
+    dropped_residues = meeko_receptor_with_retries(pdb, prepared, prefix)
     if not pdbqt.exists():
         candidates = list(WORK.glob(f"{pdb}_AB_receptor*.pdbqt"))
         assert len(candidates) == 1, f"{pdb}: ambiguous receptor pdbqt {candidates}"
@@ -323,6 +408,7 @@ def prepare_receptor(pdb, structure):
     assert near >= 50, f"{pdb}: shared box is empty after superposition ({near} atoms)"
 
     return {"pdbqt": str(pdbqt), "atoms": int(len(coords)),
+            "dropped_unbuildable_residues": dropped_residues,
             "atoms_near_box_centre": near,
             "rebuilt_sidechain_atoms": rebuilt,
             "unbuilt_missing_loops": missing_loops,

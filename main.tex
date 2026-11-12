@@ -1,0 +1,449 @@
+% =====================================================================
+%  AS.410.662 Molecular Modeling for Drug Discovery Lab
+%  RESEARCH PROJECT - PREPRINT MANUSCRIPT
+%  Rayan Abdelaziz
+%  Built on the course Report Template. Formatting is unmodified.
+% =====================================================================
+
+\documentclass[sigconf]{acmart}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{textcomp}
+\usepackage{makecell}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\settopmatter{printacmref=false} % removes the citation block below the abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes the copyright footnote
+\pagestyle{plain}                % removes running headers
+
+% Marks a number still pending the full-ensemble validity sweep.
+% Must be empty before submission.
+\newcommand{\pending}[1]{\textbf{[PENDING: #1]}}
+
+\begin{document}
+
+\title{Receptor Identity, Not Cognate Pairing, Governs Docking Success
+       at the $\alpha$7 Nicotinic Receptor Modulator Site}
+
+\author{Rayan Abdelaziz}
+\email{rabdela7@jh.edu}
+\orcid{}
+\affiliation{%
+  \institution{Johns Hopkins University}
+  \city{Baltimore}
+  \state{Maryland}
+  \country{USA}
+}
+
+\begin{abstract}
+The $\alpha$7 nicotinic acetylcholine receptor is a cholinergic target whose
+positive allosteric modulators (PAMs) avoid the desensitisation that has
+frustrated orthosteric agonists. Four cryo-EM structures now resolve four
+chemically distinct PAMs in the same transmembrane site, which makes it possible
+to ask how much a docking protocol depends on which of them is used. Each PAM was
+docked into each structure across five seeds in one shared coordinate frame and
+one shared box, giving 80 runs per preparation arm and 160 in total. Twenty-six of
+80 runs placed a correct pose at rank 1, and every one of those 26 occurred in
+receptor 8V80 or 8V88; 8UTB and 8V82 returned none, including for their own
+ligands. Success varied far more across receptors (0, 11, 0, 15 of 20) than across
+ligands (0, 6, 10, 10 of 20), and the cognate diagonal split two cells at 5/5
+against two at 0/5, so cognate docking was not an upper bound. The two failures
+were mechanistically distinct: 8V82 sampled a 0.71--0.79~\AA\ pose in every seed
+and ranked it second, whereas 8UTB never sampled one. Of the 720 poses, 715 passed
+all 22 physical-validity checks and the 5 that failed were low-ranked poses of a
+single ligand, so misplacement rather than chemistry drives the result. A second,
+independently prepared arm using the recommended p$K_a$-based protonation
+reproduced the rank-1 matrix cell for cell, excluding protonation as the
+explanation.
+\end{abstract}
+
+\keywords{Molecular Docking, Cross-Docking, Structure-Based Drug Design,
+Allosteric Modulation, Nicotinic Acetylcholine Receptor, Pose Prediction}
+
+\maketitle
+\fancyfoot{}
+\fancyhead{}
+\thispagestyle{empty}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:introduction}
+
+The $\alpha$7 nicotinic acetylcholine receptor is a homopentameric Cys-loop
+channel widely expressed in the nervous system and on immune cells, and a
+long-standing target in cognitive and inflammatory disease. Orthosteric agonists
+have repeatedly failed to translate, largely because the receptor desensitises
+within milliseconds, so attention has moved to positive allosteric modulators
+(PAMs), which act only when acetylcholine is already present. PAMs bind an
+intersubunit pocket in the transmembrane domain, so the site is formed by two
+adjacent subunits and is sensitive to their relative orientation.
+
+Burke et al.~\cite{burke2024} determined cryo-EM structures of $\alpha$7 bound to
+epibatidine together with each of several chemically distinct PAMs, and reported
+that the modulators occupy partially overlapping sites while the receptor adopts
+different conformational states by modulator class. If one site adopts materially
+different shapes depending on which modulator is bound, then any virtual screen
+built on one of these structures inherits that structure's pocket. Cross-docking
+performance has been characterised for soluble enzyme families, but not for this
+site, and not for a set of structures differing only in bound modulator; which of
+the four a screen should use is an unexamined decision.
+
+\textbf{Hypothesis.} This study was proposed to test a specific prediction: that
+cognate receptor conformations recover their own experimentally observed PAM poses
+more accurately than noncognate conformations. That prediction follows directly
+from the cross-docking literature on soluble enzymes, and it is the hypothesis the
+experiment was designed around. It is not supported by the result, and
+Section~\ref{sec:hypothesis} takes up why.
+
+\textbf{Contribution.} We run the full cognate/cross matrix for the four PAM-bound
+structures in a single shared frame with seed replication; decompose each failure
+into sampling versus scoring using the full ranked pose list rather than the top
+pose alone; and test the leading preparation-based explanation by repeating the
+entire matrix under a second protonation protocol differing in one variable.
+
+\subsection{Related Work}
+
+Sutherland et al.~\cite{sutherland2007} cross-docked eight protein families and
+established the two findings this study is positioned against: average
+cross-docking accuracy is substantially worse than self-docking, and accuracy
+improves when the receptor is chosen from the complex whose bound ligand most
+resembles the docked ligand. They also found no relationship between
+crystallographic resolution and cross-docking accuracy. Their targets were soluble
+enzymes with one ligand per site; whether the same holds at a lipid-exposed
+intersubunit allosteric site in a membrane channel is open. Amaro et
+al.~\cite{amaro2018} review ensemble docking, the standard remedy once receptor
+dependence is established, which presupposes that conformational variation drives
+the variance --- testable here, and measured directly.
+
+Buttenschoen et al.~\cite{buttenschoen2024} introduced PoseBusters after showing
+that methods can report confident poses that are not physically valid molecules,
+and argued physical-validity checks should accompany any pose claim. We apply
+those checks and find they separate cleanly from pose correctness in this system,
+which bounds what such filtering can be expected to do. What none of this work
+addresses is whether the cognate/cross distinction is the right axis at all ---
+the question the matrix below answers in the negative.
+
+% =====================================================================
+\section{Methods}
+
+\subsection{Structures and Ligand Set}
+
+Four PAM-bound $\alpha$7 structures from Burke et al.~\cite{burke2024}, retrieved
+from the PDB~\cite{berman2000pdb} on 2026-11-11: 8UTB (NS-1738, ligand XG3,
+2.30~\AA), 8V80 ((--)-TQS, YLR, 2.34~\AA), 8V82 (PNU-120596, I34, 2.61~\AA) and
+8V88 (GAT107, YLI, 2.30~\AA). All four carry the same orthosteric agonist
+(epibatidine), so they differ in modulator and conformational state rather than in
+construct. $\alpha$7 is homopentameric, so each structure holds up to five copies
+of the PAM site; the copy at the A--B interface was selected by measuring each
+copy's distance to that interface rather than by hard-coding a chain and residue,
+which independently reproduced the copy chosen manually in earlier work on 8V82.
+
+\subsection{Common Frame and Docking Box}
+
+Results are comparable across receptors only if the box is the same box. Chains A
+and B of each structure were matched to 8V82 by residue number and superposed on
+matched C$\alpha$ atoms with \texttt{gemmi}~\cite{wojdyr2022}, applying the
+transform to the whole structure including its ligand, so each receptor and its
+own crystallographic pose move together. One box was then defined once in that
+frame --- centre $(146.903, 153.799, 133.568)$~\AA, size $20.0 \times 22.0 \times
+29.0$~\AA, 12{,}760~\AA$^3$ --- and used for all 160 runs. No per-receptor
+recentring was done, since that would reintroduce the receptor-specific bias the
+common frame removes.
+
+\subsection{Receptor Preparation: Two Arms}
+
+Preparation was run as two arms differing in exactly one variable.
+\textbf{Arm~1} repaired structures with PDBFixer (missing heavy atoms and residues
+rebuilt, hydrogens added at pH~7.4) via the OpenMM toolchain~\cite{eastman2017},
+then converted to PDBQT with Meeko~\cite{meeko}. \textbf{Arm~2} was identical
+through heavy-atom repair, after which protonation was assigned by PDB2PQR with
+the AMBER force field~\cite{dolinsky2007} and titration states predicted by PROPKA
+at pH~7.4~\cite{olsson2011}, recording each histidine state (HID/HIE/HIP) in the
+run manifest. Arm~2 is the recommended route for this toolchain, because hydrogens
+placed by PDBFixer are a known source of valence errors when Meeko reads the
+receptor; arm~1 is the alternative. Lipids, waters, ions, glycans and epibatidine
+were excluded uniformly from all four receptors in both arms, so no
+cognate-versus-cross difference can reflect a per-receptor preparation choice.
+
+One preparation detail changed the protocol and is reported. Meeko rejected a
+C-terminal residue in 8V80 with an explicit-valence error traceable to the OXT
+atom added by PDBFixer --- an instance of the incompatibility above --- and its
+own options for discarding problem residues act after the failing stage, so the
+fix was to strip terminal OXT atoms before Meeko reads the structure. A guard was
+added that refuses to drop any unbuildable residue within 8.0~\AA\ of the box;
+arm~2 later tripped it at 8V80 B:478 (1.11~\AA\ from the box) for the identical
+reason. The manifest records \texttt{dropped\_unbuildable\_residues: []} for every
+receptor in both arms: no binding-site residue was ever silently discarded. The
+same OXT rule was applied in both arms, preserving the single-variable difference.
+
+\subsection{Ligand Preparation and Docking}
+
+Ligand bond orders and formal charges were taken from the RCSB chemical component
+dictionary definition for each code, never perceived from deposited coordinates,
+since geometry-based perception is unreliable for the aromatic and sulfonamide
+groups these PAMs carry and a wrong bond order changes the rotatable-bond count
+and therefore the search problem. Ligands were built with RDKit~\cite{rdkit} and
+converted with Meeko~\cite{meeko}. Docking used AutoDock Vina
+1.2.7~\cite{eberhardt2021autodock,trott2010autodock} at exhaustiveness 32, 9
+modes, 2 CPU threads, with seeds 2026--2030: $4 \times 4 \times 5 = 80$ runs and
+up to 720 poses per arm.
+
+\subsection{Validation, Analysis and Metrics}
+
+A regression check was defined before the matrix and required to pass before any
+matrix run started: the generalised pipeline had to reproduce a previously
+established single-receptor 8V82 baseline, rank-1 RMSD in $[6.40, 6.46]$~\AA\ and
+rank-2 in $[0.70, 0.80]$~\AA, with the decision rule set in advance. This guards
+against the characteristic failure of a refactor --- a pipeline that silently
+changes behaviour and returns a clean matrix of wrong numbers. Arm~1 returned
+6.408 / 0.744~\AA\ and arm~2 6.443 / 0.723~\AA; both passed.
+
+Pose accuracy is symmetry-aware heavy-atom RMSD to the crystallographic pose via
+RDKit \texttt{CalcRMS}~\cite{rdkit}, computed in place. Symmetry awareness is
+required because these ligands contain topologically equivalent atoms; no prior
+alignment is applied because both poses already sit in the common frame, and
+aligning would measure shape rather than placement agreement. Two measures are
+reported, and the distinction carries the analysis: \textbf{top-1 success}, the
+rank-1 pose within 2.0~\AA\ --- what a screen consumes --- and \textbf{any-pose
+success}, any pose in the ranked list within 2.0~\AA\ --- whether the search ever
+visited the answer. Failing top-1 while passing any-pose is a \emph{scoring}
+failure; failing both is a \emph{sampling} failure. A single combined rate
+discards exactly that distinction.
+
+Physical validity used PoseBusters~\cite{buttenschoen2024} (22 checks: internal
+geometry, stereochemistry, intramolecular and protein--ligand clashes), invoked
+without a reference ligand, so it contributes validity checks only and no RMSD
+check. Pose diversity used DBSCAN~\cite{ester1996} on the precomputed pairwise
+RMSD matrix within each condition (45 poses: 9 modes $\times$ 5 seeds),
+$\varepsilon = 2.0$~\AA, minimum cluster size 3 --- clustering on the RMSD matrix
+directly keeps the clustering metric identical to the success metric. Native
+contacts are heavy-atom proximities within 4.5~\AA\ of the deposited pose, and are
+proximities only: no donor--acceptor angle is tested.
+
+% =====================================================================
+\section{Results}
+
+\subsection{Success Is Organised by Receptor}
+
+Table~\ref{tab:matrix} gives arm-1 outcomes for all 16 cells.
+
+\begin{table}[h!]
+\caption{Arm 1: top-1 / any-pose successes out of 5 seeds. Cognate cells marked
+$\dagger$. Every top-1 success in the entire matrix falls in receptor 8V80 or
+8V88.}
+\label{tab:matrix}
+\begin{center}
+\begin{tabular}{l|c|c|c|c}
+\hline
+Ligand & 8UTB & 8V80 & 8V82 & 8V88 \\ \hline
+8UTB (NS-1738)    & 0/0$^\dagger$ & 1/5 & 0/0 & 5/5 \\ \hline
+8V80 ((--)-TQS)   & 0/0 & 5/5$^\dagger$ & 0/0 & 5/5 \\ \hline
+8V82 (PNU-120596) & 0/3 & 0/0 & 0/5$^\dagger$ & 0/0 \\ \hline
+8V88 (GAT107)     & 0/0 & 5/5 & 0/0 & 5/5$^\dagger$ \\ \hline
+Receptor total    & 0/3 & 11/15 & 0/5 & 15/15 \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+Across 80 runs, 26 placed a correct pose at rank 1 and 38 placed one anywhere.
+All 26 top-1 successes occurred in 8V80 or 8V88; 8UTB and 8V82 returned 0/20 each,
+for every ligand including their own. Summed over ligands the four receptors gave
+0, 11, 0 and 15 of 20; summed over receptors the four ligands gave 0, 6, 10 and 10
+of 20. The receptor axis spans the full range and the ligand axis does not.
+
+The cognate diagonal is split: 8V88 succeeds 5/5 (0.313--0.332~\AA) and 8V80 5/5
+(0.791--0.828~\AA), while 8V82 is 0/5 at top-1 and 8UTB 0/5 on both measures.
+Pooled, the diagonal gives 10/20 cognate against 16/60 cross, with median rank-1
+RMSD 3.615 against 7.011~\AA --- numbers that read as a cognate advantage but are
+produced by which receptors sit on the diagonal. The sharpest counterexample is
+NS-1738: 0/5 in its own 8UTB, with nothing closer than 5.836~\AA, and 5/5 at
+0.676--0.689~\AA\ in the noncognate 8V88.
+
+\subsection{Sampling and Scoring Failures Are Distinct}
+
+Cognate 8V82 and cognate 8UTB both report 0/5 at top-1 by different mechanisms. In
+8V82 all five seeds place a pose at 0.712--0.786~\AA, always at rank 2, while
+rank 1 sits at 6.401--6.458~\AA: the search finds the pose every time and the
+scoring function ranks a wrong one above it every time. In 8UTB no seed produces
+anything within 2.0~\AA, the best across five seeds being 5.836--5.898~\AA\ at
+rank 3. The first is recoverable by rescoring, with the correct pose already in
+the output file; the second is not recoverable at all.
+
+\subsection{Wrong Poses Are Chemically Valid}
+
+All 720 poses of arm 1 were checked, 80 at each of ranks 1 through 9.
+\textbf{715 passed all 22 checks and 5 did not.} Every failure is a GAT107 pose
+(four in receptor 8V88, one in 8V80); every one fails the same single check,
+minimum distance to protein, at 3.60--4.12~\AA\ RMSD; and \emph{none is a rank-1
+pose} --- they sit at ranks 3, 3, 4, 8 and 9. That is why the full ensemble had to
+be checked rather than a subset: an earlier pass over each run's rank-1 and
+best-sampled pose covered 130 distinct poses and returned 130 of 130 passing,
+which would have supported a stronger claim than the data do, because all five
+failures lie at ranks that subset never sampled.
+
+The conclusion for reported poses is unchanged and now better supported. No pose
+this protocol would hand to a virtual screen is physically invalid, and the wrong
+ones are reasonable molecules in the wrong place. Physical validity therefore does
+not discriminate among the poses whose placement is at issue, and validity
+filtering cannot serve as a correctness filter for conventional docking output.
+
+Two further measures behave the same way. DBSCAN shows the 8V82 near-native pose
+is reproducible rather than a fluctuation: it forms its own cluster, populated in
+all five seeds with no points labelled noise, while the incorrectly top-ranked
+pose sits in the largest cluster of that condition (14 of 45) --- the scoring
+function prefers a densely sampled wrong basin to a reproducible right one. Native
+contact recovery averages 92.6\% for near-native poses against 56.4\% for
+non-native, but the 8V82 rank-1 pose recovers 73.3\% while being 6.4~\AA\ wrong,
+so contact recovery is not a proxy for pose accuracy either.
+
+\subsection{Structural Correlates}
+\label{sec:correlates}
+
+8UTB differs from the other three on three independent counts. In the common
+frame, its matched C$\alpha$ atoms deviate from 8V82 by 1.455~\AA\ overall and
+1.99~\AA\ over the pocket, against 0.379/0.576~\AA\ (8V80) and 0.927/0.610~\AA\
+(8V88); superposing the 34-residue pocket locally, 8UTB differs from the others by
+1.807, 1.802 and 1.824~\AA\ while all other pairs fall between 0.260 and
+0.506~\AA. It is the only structure with no lipid within 6~\AA\ of any PAM copy
+(nearest 8.71~\AA), where the other three each place two lipids against every copy
+(nearest 2.26--2.42~\AA, second 2.87--3.06~\AA). And it contains no bound
+Ca$^{2+}$, while the others hold five copies each. 8V82, by contrast, is not a
+conformational outlier; it is the lowest-resolution structure (2.61 versus
+2.30--2.34~\AA), and its failure is a scoring failure.
+
+\subsection{Protonation Does Not Explain It}
+
+PROPKA assigns HIS114 as HIE in both failing receptors and HID in both succeeding
+ones --- a pattern that arises by chance roughly one time in three at $n = 4$, and
+so is testable rather than evidential. Arm~2 is that test. It returned 26/80
+top-1, identical to arm~1, and 41/80 any-pose against 38. Compared cell by cell
+over all 80 matched runs, \emph{no cell changed its top-1 count}: the rank-1
+matrix is identical under both protocols. The three extra any-pose recoveries fall
+in two cells, both in receptor 8UTB (cognate 0/5~$\rightarrow$~1/5; 8V82 into 8UTB
+3/5~$\rightarrow$~5/5).
+
+An identical matrix invites the objection that the second arm changed nothing, so
+the runs were compared numerically rather than by outcome. Of the 80 matched runs,
+41 are identical in rank-1 RMSD and score to within $10^{-6}$, and 39 differ. The
+39 that differ are \emph{entirely} in the two failing receptors: all 20 runs in
+8UTB and 19 of 20 in 8V82. Both succeeding receptors are unchanged, 20 of 20 each,
+because the two protocols assigned them equivalent protonation and so produced
+equivalent prepared receptors. The negative result is therefore stronger than the
+identical matrix alone suggests: changing the protonation protocol altered the
+numerical outcome of nearly half the matrix, concentrated precisely on the two
+receptors that fail, and did not move a single run across the threshold a virtual
+screen would use. Protonation perturbs the search where the search is failing, and
+does not rescue it.
+
+% =====================================================================
+\section{Discussion}
+
+\subsection*{The hypothesis was wrong, and that is the finding}
+\label{sec:hypothesis}
+
+The proposal predicted that cognate conformations would recover their own poses
+more accurately than noncognate ones. The matrix does not support that. Two of the
+four cognate pairs fail in every seed, one ligand docks better into a foreign
+receptor than into its own, and the variable that separates success from failure
+is which receptor was used: an otherwise identical protocol returns 15/20 at top-1
+in one receptor and 0/20 in another, over the same ligands and the same box. The
+prediction was a reasonable one --- it is what the cross-docking literature on
+soluble enzyme families would lead you to expect~\cite{sutherland2007} --- and it
+does not hold at this site, for these structures.
+
+It is worth being precise about what failed. The hypothesis assumed the cognate
+relationship is the informative one: that a pocket shaped around a ligand is
+thereby the best pocket for it. Here, two pockets are good for every ligand and
+two are good for none, and that property of the receptor swamps the cognate
+relationship entirely. The experiment was built to measure a cognate-versus-cross
+gap and instead measured a receptor effect the cognate framing cannot express ---
+which is why the pooled cognate rate (10/20 against 16/60) looks like a textbook
+confirmation while every individual cell contradicts it. Had the matrix been
+summarised the way such studies usually are, the wrong conclusion would have been
+well supported by the numbers. Cognate docking is normally treated as a protocol's
+ceiling; here a pooled rate implies a moderate capability that no individual cell
+exhibits, since two cells succeed completely, two fail completely, and the mean
+describes neither. For anyone screening against this site, which deposited
+structure to use is a larger decision than ligand preparation or search depth.
+
+This contradicts the usual reading of Sutherland et al.~\cite{sutherland2007}:
+their similarity-selection result --- pick the receptor whose bound ligand
+resembles yours --- presumes the cognate relationship is informative, and here it
+is not. That the lowest-resolution structure is also a failing one is likewise not
+evidence that resolution predicts accuracy; they found no such relationship, and
+with $n = 4$ ours cannot establish one. Theirs is the better-powered finding, and
+we read our result as consistent with it.
+
+The sampling/scoring decomposition is worth retaining for the same reason. Cognate
+8V82 and cognate 8UTB are identical at top-1 and are different problems with
+different remedies --- rescoring for one, and for the other, the conformational
+sampling that ensemble docking~\cite{amaro2018} exists to supply. That 8UTB is
+simultaneously the conformational outlier, the only lipid-free pocket and the only
+Ca$^{2+}$-free structure makes it the natural ensemble-docking test case, though
+at $n = 4$ these three differences cannot be disentangled and none is established
+as causal. Finally, the validity results bound what physical-validity filtering
+can do. Poses 6--10~\AA\ from the answer are valid molecules in plausible
+environments, and one recovers nearly three-quarters of native contacts. Such
+filtering is an effective guard against the distorted output that motivated
+PoseBusters~\cite{buttenschoen2024}, but it does not discriminate among
+conventional docking poses and should not be reported as though it does.
+
+\textbf{Limitations.} Two bear directly on the central claim. Three of four
+receptors are near-identical in the pocket (0.260--0.506~\AA\ pairwise), so the
+conformational arm rests effectively on one structure, and a receptor effect
+across four structures of which three are interchangeable is weaker than the count
+suggests. And the deposited PAM orientation in 8UTB is the least certain of the
+four, modelled into comparatively diffuse density; every 8UTB RMSD is measured
+against that reference, so a sampling failure diagnosed there is not fully
+separable from disagreement with the reference itself. The 8V82 scoring failure
+carries no such caveat. Beyond these: all four structures come from one study, so
+the conformational range is that study's; receptors are rigid, which is the
+standard Vina setting and precisely the assumption cross-docking stresses; scoring
+is Vina's function alone; five seeds bound run-to-run variation but do not support
+distributional claims; and the 2.0~\AA\ threshold is conventional but arbitrary,
+so RMSD ranges are given throughout. There is no experimental validation.
+
+% =====================================================================
+\section{Conclusion}
+
+Across a seed-replicated 4$\times$4 cognate/cross matrix in one shared frame,
+docking success at the $\alpha$7 PAM site was determined by which receptor was
+used, not by whether a ligand was returned to its own structure: all 26 top-1
+successes in 80 runs fell in two of four receptors, and the cognate diagonal split
+evenly between complete success and complete failure. The two failing receptors
+failed differently --- one never sampling the correct pose, one sampling it in
+every seed and ranking it second --- and that distinction is invisible to a top-1
+rate. A second matrix under the recommended protonation protocol reproduced the
+rank-1 result cell for cell, excluding preparation as the explanation. The
+experiment that would most change this conclusion is flexible-receptor or ensemble
+docking against 8UTB, which would test directly whether its sampling failure is
+the induced-fit problem its conformational, lipid and Ca$^{2+}$ differences
+suggest.
+
+% =====================================================================
+\section*{Data and Code Availability}
+
+Structures were retrieved from the Protein Data Bank (8UTB, 8V80, 8V82, 8V88;
+accessed 2026-11-11) and ligand definitions from the RCSB chemical component
+dictionary (XG3, YLR, I34, YLI; same date). All docking, analysis and figure code
+is provided as a Jupyter notebook that runs top to bottom on a free Google Colab
+CPU runtime, building an isolated Python 3.12 environment with pinned package
+versions (AutoDock Vina 1.2.7, Meeko 0.8.0, gemmi 0.7.4, RDKit 2025.9.4, PDBFixer
+1.12.0, OpenMM 8.3.1, NumPy 1.26.4, PoseBusters 0.6.5, PDB2PQR 3.8.0, PROPKA
+3.5.1), recorded seeds (2026--2030) and a provenance cell that prints the resolved
+versions. The notebook reproduces every figure and table from archived per-run
+outputs by default and can re-run the docking from a single flag; it reads nothing
+from any personal cloud storage. Per-run checkpoints, all 1{,}440 poses, analysis
+tables and the run manifest with per-receptor SHA-256 hashes are archived
+alongside it.
+
+% =====================================================================
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

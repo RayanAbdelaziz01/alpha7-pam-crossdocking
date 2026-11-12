@@ -807,27 +807,30 @@ for label, arm in (("arm1", A1), ("arm2", A2)):
     if pb is None:
         print("%-46s %-18s SKIPPED (no table)" % ("%s validity" % label, "-"))
         continue
-    cols = [c for c in pb.columns if pb[c].dtype == bool]
-    npass = int(pb[cols].all(axis=1).sum())
+    # This table is the summarised form written by the full-ensemble sweep:
+    # one all_passed flag per pose, with the number of checks applied recorded
+    # in n_checks and the names of any failures in failed_checks. Counting
+    # boolean columns would therefore count 1, not 22.
+    npass = int(pb["all_passed"].sum())
     check("%s poses checked by PoseBusters" % label, len(pb), 720)
     check("%s distinct poses" % label,
           len(pb.groupby(["ligand", "receptor", "seed", "rank"])), 720)
-    check("%s checks per pose" % label, len(cols), 22)
+    check("%s checks per pose" % label,
+          sorted(int(v) for v in pb["n_checks"].unique()), [22])
     if EXPECTED_PASS[label] is not None:
         check("%s poses passing all checks" % label, npass, EXPECTED_PASS[label])
     else:
         print("%-46s %-18s (recorded, not asserted)"
               % ("%s poses passing all checks" % label, npass))
     check("%s rank-1 poses failing validity" % label,
-          int((~pb[pb["rank"] == 1][cols].all(axis=1)).sum()), 0)
+          int((~pb[pb["rank"] == 1]["all_passed"]).sum()), 0)
     con = arm["contacts"]
     check("%s poses scored for contacts" % label, len(con), 720)
 
 # The arm-1 failures are a single ligand failing a single check.
 pb1 = A1["busters"]
 if pb1 is not None:
-    c1 = [c for c in pb1.columns if pb1[c].dtype == bool]
-    f1 = pb1[~pb1[c1].all(axis=1)]
+    f1 = pb1[~pb1["all_passed"]]
     check("arm1 failing poses are all one ligand",
           sorted(f1.ligand.unique()), ["8V88"])
     check("arm1 failing poses share one failed check",

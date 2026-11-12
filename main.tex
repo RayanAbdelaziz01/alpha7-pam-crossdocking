@@ -150,8 +150,9 @@ and B of each structure were matched to 8V82 by residue number and superposed on
 matched C$\alpha$ atoms with \texttt{gemmi}~\cite{wojdyr2022}, applying the
 transform to the whole structure including its ligand, so each receptor and its
 own crystallographic pose move together. One box was then defined once in that
-frame --- centre $(146.903, 153.799, 133.568)$~\AA, size $20.0 \times 22.0 \times
-29.0$~\AA, 12{,}760~\AA$^3$ --- and used for all 160 runs. No per-receptor
+frame --- centre $(146.903,\allowbreak 153.799,\allowbreak 133.568)$~\AA, size
+$20.0 \times 22.0 \times 29.0$~\AA, 12{,}760~\AA$^3$ --- and used for all 160
+runs. No per-receptor
 recentring was done, since that would reintroduce the receptor-specific bias the
 common frame removes.
 
@@ -440,7 +441,8 @@ versions. The notebook reproduces every figure and table from archived per-run
 outputs by default and can re-run the docking from a single flag; it reads nothing
 from any personal cloud storage. Per-run checkpoints, all 1{,}440 poses, analysis
 tables and the run manifest with per-receptor SHA-256 hashes are archived
-alongside it.
+alongside it. Code and data are public at
+\url{https://github.com/RayanAbdelaziz01/alpha7-pam-crossdocking}.
 
 % =====================================================================
 \bibliographystyle{ACM-Reference-Format}

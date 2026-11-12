@@ -377,15 +377,27 @@ cells.append(code(r"""
 RUNNERS = {1: "matrix_runner.py", 2: "matrix_runner_arm2.py"}
 
 
+SOURCE_BASE = ("https://raw.githubusercontent.com/RayanAbdelaziz01"
+               "/alpha7-pam-crossdocking/main/src/")
+
+
 def find_file(name, extra_dirs=()):
-    # The runners and analysis.py ship beside the notebook.
+    # The runners and analysis.py live beside the notebook in the repository.
+    # Prefer a local copy; otherwise fetch the published one, so that
+    # RECOMPUTE = True needs no manual upload either.
     for cand in [os.path.join("/content", name), name] + \
                 [os.path.join(d, name) for d in extra_dirs]:
         if os.path.exists(cand):
             return cand
-    raise FileNotFoundError(
-        "%s not found. It ships alongside this notebook; upload it to "
-        "/content." % name)
+    local = os.path.join("/content", name)
+    try:
+        urllib.request.urlretrieve(SOURCE_BASE + name, local)
+    except Exception as exc:
+        raise FileNotFoundError(
+            "%s not found locally and could not be fetched from %s (%s). "
+            "Upload it to /content." % (name, SOURCE_BASE, exc))
+    print("fetched %s from the repository" % name)
+    return local
 
 
 if RECOMPUTE:

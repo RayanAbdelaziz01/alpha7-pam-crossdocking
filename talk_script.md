@@ -8,7 +8,7 @@ in **bold** are counted from the archived result files; do not paraphrase them
 upward.
 
 **Demo (optional, ~45 s).** Open the notebook from the public repository, run
-the final verification cell, and let it print `ALL CHECKS PASSED — 34/34`. That
+the final verification cell, and let it print `ALL CHECKS PASSED — 44/44`. That
 is the shortest possible demonstration that every number in these slides is
 re-derived from the archived runs rather than transcribed.
 

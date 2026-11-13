@@ -552,6 +552,105 @@ for rec in ORDER:
              c.best_sampled_rmsd_A.min(), c.best_sampled_rmsd_A.max()))
 """))
 
+cells.append(md(r"""
+### Is the receptor effect larger than chance?
+
+The statement above is a claim about arrangement, so it is tested as one. The
+eighty runs are not eighty independent observations: five seeds within a cell
+are repeats of one stochastic search over one ligand-receptor pair, and a test
+that treated them as independent would overstate the evidence fivefold. The
+unit is therefore the cell.
+
+The sixteen observed cell outcomes are permuted among the sixteen positions.
+This holds the overall success rate and the multiset of cell outcomes fixed and
+asks only whether the arrangement aligns with one axis more strongly than
+chance would produce. The statistic is the among-group variance of that axis's
+marginal totals. With these outcomes there are 48,048 distinct arrangements, so
+the null distribution is enumerated exactly rather than sampled.
+"""))
+
+cells.append(code(r"""
+import math
+from collections import Counter
+
+import numpy as np
+
+
+def _multiset_permutations(counter, prefix=None):
+    # Distinct arrangements only, generated without materialising 16!.
+    prefix = prefix or []
+    if not counter:
+        yield prefix
+        return
+    for value in sorted(counter):
+        rest = dict(counter)
+        rest[value] -= 1
+        if rest[value] == 0:
+            del rest[value]
+        yield from _multiset_permutations(rest, prefix + [value])
+
+
+def axis_permutation_test(counts):
+    # counts: 4x4 array of successes per cell, ligands down, receptors across.
+    m = np.asarray(counts, dtype=float)
+    flat = [float(v) for v in m.flatten()]
+
+    denom = 1
+    for c in Counter(flat).values():
+        denom *= math.factorial(c)
+    n_arrangements = math.factorial(len(flat)) // denom
+
+    draws = np.array([np.array(a, dtype=float).reshape(4, 4)
+                      for a in _multiset_permutations(Counter(flat))])
+    rec_null = draws.sum(axis=1).var(axis=1)      # variance of column sums
+    lig_null = draws.sum(axis=2).var(axis=1)      # variance of row sums
+
+    obs_rec = float(np.var(m.sum(axis=0)))
+    obs_lig = float(np.var(m.sum(axis=1)))
+
+    grand = m.mean()
+    ss_rec = 4.0 * float(((m.mean(axis=0) - grand) ** 2).sum())
+    ss_lig = 4.0 * float(((m.mean(axis=1) - grand) ** 2).sum())
+    ss_tot = float(((m - grand) ** 2).sum())
+
+    return {
+        "n_arrangements": n_arrangements,
+        "receptor_variance": obs_rec,
+        "ligand_variance": obs_lig,
+        "p_receptor": float((rec_null >= obs_rec).sum()) / len(draws),
+        "p_ligand": float((lig_null >= obs_lig).sum()) / len(draws),
+        "receptor_ss_fraction": ss_rec / ss_tot,
+        "ligand_ss_fraction": ss_lig / ss_tot,
+    }
+
+
+AXIS = {}
+for label, arm in (("arm 1", A1), ("arm 2", A2)):
+    r = axis_permutation_test(cell_counts(arm["summary"], "top1_success"))
+    AXIS[label] = r
+    print("%s - exact permutation test over %d distinct arrangements"
+          % (label, r["n_arrangements"]))
+    print("  receptor axis: variance %6.3f  p = %.4f  (%.1f%% of among-cell SS)"
+          % (r["receptor_variance"], r["p_receptor"],
+             100 * r["receptor_ss_fraction"]))
+    print("  ligand   axis: variance %6.3f  p = %.4f  (%.1f%% of among-cell SS)"
+          % (r["ligand_variance"], r["p_ligand"],
+             100 * r["ligand_ss_fraction"]))
+"""))
+
+cells.append(md(r"""
+The receptor axis departs from the permutation null (p = 0.029) and the ligand
+axis does not (p = 0.50); the receptor main effect accounts for 52.8 per cent of
+the among-cell sum of squares against 20.0 per cent for the ligand. Both arms
+give identical values, since their rank-1 matrices are identical.
+
+This quantifies the asymmetry rather than establishing a general result. Sixteen
+cells is a small design, the test conditions on the observed set of cell
+outcomes, and — as the limitations note — three of the four receptors are nearly
+identical in the pocket, so what the receptor axis separates here is closer to
+two structures against two than four independent conformations.
+"""))
+
 # ---------------------------------------------- 10. sampling versus scoring
 cells.append(md(r"""
 ## 10. Sampling failure and scoring failure
@@ -848,6 +947,18 @@ if pb1 is not None:
     check("arm1 failing poses share one failed check",
           sorted({c for s in f1.failed_checks.dropna() for c in str(s).split(";") if c}),
           ["minimum_distance_to_protein"])
+
+# The receptor-versus-ligand asymmetry, quantified. Rounded to three places
+# because the permutation p-values are exact rationals over 48,048.
+for label in ("arm 1", "arm 2"):
+    r = AXIS[label]
+    check("%s permutation arrangements" % label, r["n_arrangements"], 48048)
+    check("%s receptor-axis p" % label, round(r["p_receptor"], 3), 0.029)
+    check("%s ligand-axis p" % label, round(r["p_ligand"], 3), 0.504)
+    check("%s receptor share of among-cell SS" % label,
+          round(r["receptor_ss_fraction"], 3), 0.528)
+    check("%s ligand share of among-cell SS" % label,
+          round(r["ligand_ss_fraction"], 3), 0.200)
 
 bad = [c for c in checks if not c[3]]
 print()

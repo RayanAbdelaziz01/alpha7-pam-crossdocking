@@ -47,7 +47,8 @@ one shared box, giving 80 runs per preparation arm and 160 in total. Twenty-six 
 80 runs placed a correct pose at rank 1, and every one of those 26 occurred in
 receptor 8V80 or 8V88; 8UTB and 8V82 returned none, including for their own
 ligands. Success varied far more across receptors (0, 11, 0, 15 of 20) than across
-ligands (0, 6, 10, 10 of 20), and the cognate diagonal split two cells at 5/5
+ligands (0, 6, 10, 10 of 20; exact permutation test on cells, $p = 0.029$ against
+$p = 0.50$), and the cognate diagonal split two cells at 5/5
 against two at 0/5, so cognate docking was not an upper bound. The two failures
 were mechanistically distinct: 8V82 sampled a 0.71--0.79~\AA\ pose in every seed
 and ranked it second, whereas 8UTB never sampled one. Of the 720 poses, 715 passed
@@ -253,6 +254,17 @@ for every ligand including their own. Summed over ligands the four receptors gav
 0, 11, 0 and 15 of 20; summed over receptors the four ligands gave 0, 6, 10 and 10
 of 20. The receptor axis spans the full range and the ligand axis does not.
 
+Because five seeds within a cell are repeats of one stochastic search rather than
+independent observations, this asymmetry was tested at the level of the sixteen
+cells. Permuting the observed cell outcomes among the sixteen positions --- which
+holds both the overall success rate and the set of outcomes fixed --- gives
+48{,}048 distinct arrangements, so the null distribution was enumerated exactly
+rather than sampled. Taking the among-group variance of an axis's marginal totals
+as the statistic, the receptor axis departs from the null ($p = 0.029$) while the
+ligand axis does not ($p = 0.50$); the receptor main effect accounts for 52.8\% of
+the among-cell sum of squares against 20.0\% for the ligand. Both arms give the
+same values, their rank-1 matrices being identical.
+
 The cognate diagonal is split: 8V88 succeeds 5/5 (0.313--0.332~\AA) and 8V80 5/5
 (0.791--0.828~\AA), while 8V82 is 0/5 at top-1 and 8UTB 0/5 on both measures.
 Pooled, the diagonal gives 10/20 cognate against 16/60 cross, with median rank-1
@@ -402,7 +414,9 @@ carries no such caveat. Beyond these: all four structures come from one study, s
 the conformational range is that study's; receptors are rigid, which is the
 standard Vina setting and precisely the assumption cross-docking stresses; scoring
 is Vina's function alone; five seeds bound run-to-run variation but do not support
-distributional claims; and the 2.0~\AA\ threshold is conventional but arbitrary,
+distributional claims, and the permutation test rests on sixteen cells and
+conditions on the observed set of outcomes, so it quantifies the asymmetry rather
+than establishing it generally; and the 2.0~\AA\ threshold is conventional but arbitrary,
 so RMSD ranges are given throughout. There is no experimental validation.
 
 % =====================================================================

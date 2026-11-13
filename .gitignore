@@ -6,3 +6,7 @@ __pycache__/
 *.bbl
 *.blg
 *.synctex.gz
+
+# Published papers are not redistributed here; they live with the author's
+# own library. The manuscript PDF is built from main.tex + references.bib.
+*.pdf

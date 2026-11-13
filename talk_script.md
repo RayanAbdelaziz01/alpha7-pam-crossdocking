@@ -270,6 +270,17 @@ have.
 
 ---
 
+## Slides 11-13 — References
+
+Three reference slides in APA format, fourteen works, alphabetical. Do not read
+them. If the deck is being paged through rather than presented, they are there
+for the reader; in the room, move past them to questions.
+
+The data sources are on the last of the three: the four structures and four
+ligand definitions with their retrieval date.
+
+---
+
 ## Anticipated questions
 **Why not flexible receptor docking?** It's the right next experiment. Rigid
 receptor is the standard Vina setting and the one most screens actually use, so it

@@ -85,7 +85,7 @@ that the modulators occupy partially overlapping sites while the receptor adopts
 different conformational states by modulator class. If one site adopts materially
 different shapes depending on which modulator is bound, then any virtual screen
 built on one of these structures inherits that structure's pocket. Cross-docking
-performance has been characterised for soluble enzyme families, but not for this
+performance has been characterised for soluble protein families, but not for this
 site, and not for a set of structures differing only in bound modulator; which of
 the four a screen should use is an unexamined decision.
 
@@ -104,13 +104,17 @@ entire matrix under a second protonation protocol differing in one variable.
 
 \subsection{Related Work}
 
-Sutherland et al.~\cite{sutherland2007} cross-docked eight protein families and
+Sutherland et al.~\cite{sutherland2007} cross-docked eight proteins across six
+families and
 established the two findings this study is positioned against: average
 cross-docking accuracy is substantially worse than self-docking, and accuracy
 improves when the receptor is chosen from the complex whose bound ligand most
 resembles the docked ligand. They also found no relationship between
-crystallographic resolution and cross-docking accuracy. Their targets were soluble
-enzymes with one ligand per site; whether the same holds at a lipid-exposed
+crystallographic resolution and cross-docking accuracy, and attribute that to
+experimental uncertainty in protein coordinates mattering less for cross-docking
+than for self-docking. Their targets were soluble
+proteins --- six enzymes and a nuclear hormone receptor --- with one ligand per
+site; whether the same holds at a lipid-exposed
 intersubunit allosteric site in a membrane channel is open. Amaro et
 al.~\cite{amaro2018} review ensemble docking, the standard remedy once receptor
 dependence is established, which presupposes that conformational variation drives
@@ -361,7 +365,7 @@ receptor than into its own, and the variable that separates success from failure
 is which receptor was used: an otherwise identical protocol returns 15/20 at top-1
 in one receptor and 0/20 in another, over the same ligands and the same box. The
 prediction was a reasonable one --- it is what the cross-docking literature on
-soluble enzyme families would lead you to expect~\cite{sutherland2007} --- and it
+soluble proteins would lead you to expect~\cite{sutherland2007} --- and it
 does not hold at this site, for these structures.
 
 It is worth being precise about what failed. The hypothesis assumed the cognate

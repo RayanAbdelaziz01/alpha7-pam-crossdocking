@@ -120,6 +120,11 @@ doi:10.1016/j.cell.2024.01.032
 Course project for AS.410.662 Molecular Modeling for Drug Discovery Lab,
 Johns Hopkins University.
 
+## License
+
+MIT — see `LICENSE`. The deposited structures and chemical component
+definitions are from the PDB and RCSB and carry their own terms.
+
 ## Use of AI tools
 
 Anthropic's Claude was used as an assistive tool in the development and debugging

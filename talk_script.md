@@ -115,6 +115,14 @@ The receptor axis spans the full range. The ligand axis doesn't.
 
 That's the headline: receptor identity, not ligand identity.
 
+And because five seeds within a cell are repeats of one search rather than
+independent observations, I tested that at the level of the sixteen cells rather
+than the eighty runs. Permuting the outcomes among the positions gives 48,048
+distinct arrangements, so the null distribution is enumerated exactly rather than
+sampled. The receptor axis departs from it at p = 0.029; the ligand axis does not,
+at p = 0.50. Sixteen cells is a small design, so that quantifies the asymmetry
+rather than settling it --- but it is no longer just an eyeball of the margins.
+
 ---
 
 ## Slide 5 — The diagonal doesn't hold

@@ -73,6 +73,8 @@ Success varies more across receptors (0, 11, 0, 15 of 20) than across ligands
 (0, 6, 10, 10 of 20), and the cognate diagonal splits two cells at 5/5 against
 two at 0/5 — so cognate docking was not an upper bound here.
 
+Tested at the level of the sixteen cells rather than the eighty correlated runs, by exact enumeration of all 48,048 distinct arrangements: the receptor axis departs from the permutation null (p = 0.029) and the ligand axis does not (p = 0.50).
+
 The second arm, differing only in protonation protocol, reproduced the rank-1
 matrix cell for cell.
 

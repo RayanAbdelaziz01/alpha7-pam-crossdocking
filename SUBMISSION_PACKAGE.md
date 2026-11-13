@@ -12,15 +12,20 @@ depend on the author's Google Drive.
 
 | File | What it is |
 |------|------------|
+| `alpha7_PAM_cross_docking_manuscript.pdf` | The manuscript as submitted, five pages. |
+| `main.tex`, `references.bib` | Manuscript source, on the course Report Template. |
 | `AS410662_Alpha7_PAM_CrossDocking.ipynb` | The notebook. Runs top to bottom on a free Colab CPU runtime. |
+| `requirements.txt` | The thirteen pinned package versions, identical to the notebook's install cell. |
 | `alpha7_artifacts.zip` | All run outputs: per-run checkpoints, pose tables, analysis CSVs, figures, manifests. Contains `ARCHIVE_MANIFEST.json` with a SHA-256 for every file. |
 | `matrix_runner.py` | Arm 1 docking runner (PDBFixer hydrogens). |
 | `matrix_runner_arm2.py` | Arm 2 docking runner (PDB2PQR/PROPKA protonation). Differs in one variable. |
 | `analysis.py` | Post-docking stages: posebusters, cluster, contacts, figures. |
-| `main.tex`, `references.bib` | The manuscript, on the course Report Template. |
-| `talk_script.md` | Speaking notes for the slide deck, section by section, with anticipated questions. |
+| `alpha7_Technical_Presentation.pptx` | Technical deck, thirteen slides, speaker notes on every slide. |
+| `talk_script.md` | Speaking notes for the technical deck, section by section, with anticipated questions. |
+| `alpha7_Pitch.pptx` | Short pitch deck, six slides, speaker notes on every slide. |
+| `pitch_script.md` | Speaking notes for the pitch deck. |
+| `LICENSE` | MIT. |
 
-The slide deck is at `https://claude.ai/artifact/GpyeZ7TyTSXG2TVxjfq6XP`.
 Code and data are public at
 `https://github.com/RayanAbdelaziz01/alpha7-pam-crossdocking`.
 
@@ -106,8 +111,10 @@ print('files:', man['n_files'], '| mismatched:', bad)
 ## Environment
 
 AutoDock Vina 1.2.7, Meeko 0.8.0, gemmi 0.7.4, RDKit 2025.9.4, PDBFixer 1.12.0,
-OpenMM 8.3.1, NumPy 1.26.4, PoseBusters 0.6.5, PDB2PQR 3.8.0 and PROPKA 3.5.1,
-under Python 3.12. Seeds 2026–2030. The notebook carries a provenance cell that
+OpenMM 8.3.1, NumPy 1.26.4, SciPy 1.17.1, PoseBusters 0.6.5, scikit-learn 1.9.1,
+matplotlib 3.11.2, PDB2PQR 3.8.0 and PROPKA 3.5.1, under Python 3.12. All
+thirteen are pinned in both `requirements.txt` and the notebook's install cell.
+Seeds 2026–2030. The notebook carries a provenance cell that
 prints all of this at run time, together with every input accession and its
 retrieval date.
 

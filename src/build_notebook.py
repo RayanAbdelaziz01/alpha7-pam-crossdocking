@@ -137,8 +137,9 @@ pip install -q uv
 uv venv /content/alpha7_py312 --python 3.12 2>/dev/null || true
 uv pip install --python /content/alpha7_py312/bin/python -q \
     vina==1.2.7 meeko==0.8.0 gemmi==0.7.4 rdkit==2025.9.4 \
-    pdbfixer==1.12.0 openmm==8.3.1 numpy==1.26.4 scipy requests \
-    posebusters scikit-learn matplotlib pdb2pqr propka
+    pdbfixer==1.12.0 openmm==8.3.1 numpy==1.26.4 scipy==1.17.1 \
+    posebusters==0.6.5 scikit-learn==1.9.1 matplotlib==3.11.2 \
+    pdb2pqr==3.8.0 propka==3.5.1 requests
 echo ENV_READY
 """))
 
@@ -231,6 +232,7 @@ DATA_DIR     = "/content/alpha7_data"   # archive is unpacked here
 ARTIFACT_URL = ("https://github.com/RayanAbdelaziz01/alpha7-pam-crossdocking"
                 "/raw/main/alpha7_artifacts.zip")
 USE_DRIVE    = False                    # author-only fallback
+DRIVE_DIR    = "/content/drive/MyDrive/alpha7_matrix_run"  # used only if USE_DRIVE
 
 WORK  = {1: "/content/alpha7_matrix",       # arm 1 working directory
          2: "/content/alpha7_matrix_arm2"}  # arm 2 - never the same directory
@@ -275,9 +277,7 @@ def resolve_data():
     if USE_DRIVE:
         from google.colab import drive
         drive.mount("/content/drive")
-        d = ("/content/drive/MyDrive/Biotechnology Masters/Fall 2026/"
-             "02_AS410662_Molecular_Modeling/04_PRESENTATIONS_AND_PROJECTS/"
-             "RESEARCH_PROJECT_Preprint/09_MATRIX_RUN")
+        d = DRIVE_DIR
         return d, os.path.join(d, "arm2_pdb2pqr"), "drive"
 
     raise FileNotFoundError(

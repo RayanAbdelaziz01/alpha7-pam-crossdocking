@@ -17,6 +17,11 @@ top-1 successes in 80 runs fall in receptors 8V80 or 8V88; 8UTB and 8V82 return
 none, including for their own ligands. The proposal's hypothesis — that cognate
 conformations recover their own poses best — is not supported.
 
+Tested at the level of the sixteen matrix cells rather than the eighty correlated
+runs, by exact enumeration of all 48,048 distinct arrangements: the receptor axis
+departs from the permutation null (*p* = 0.029) and the ligand axis does not
+(*p* = 0.50).
+
 ## Reproducing the analysis
 
 Open `AS410662_Alpha7_PAM_CrossDocking.ipynb` in Google Colab on a **CPU**
@@ -46,7 +51,8 @@ the notebook runs to the end without raising, the results have been reproduced.
 
 ## Environment
 
-The notebook builds an isolated Python 3.12 virtual environment and pins:
+The notebook builds an isolated Python 3.12 virtual environment and pins every
+package in it. `requirements.txt` carries the same pins for use outside Colab.
 
 | Package | Version | | Package | Version |
 |---|---|---|---|---|
@@ -57,7 +63,10 @@ The notebook builds an isolated Python 3.12 virtual environment and pins:
 | PDBFixer | 1.12.0 | | PDB2PQR | 3.8.0 |
 | OpenMM | 8.3.1 | | PROPKA | 3.5.1 |
 
-Seeds are 2026–2030. A provenance cell prints the resolved versions at runtime.
+Seeds are 2026–2030. A provenance cell prints the resolved versions at runtime,
+so the environment a given run actually used is recorded in the notebook output.
+Reproducibility is pinned at package level, not at interpreter-patch level: the
+3.12 point release Colab resolves may differ from the one used here.
 
 ## The two preparation arms
 
@@ -88,6 +97,7 @@ src/build_notebook.py                    generates the notebook
 src/lint_notebook.py                     static execution-order checker
 src/pose_provenance.py                   identifies which arm a pose set came from
 main.tex, references.bib                 manuscript source
+requirements.txt                         pinned environment, same as the notebook's
 ```
 
 `alpha7_artifacts.zip` sits at the repository root. It carries the per-run
@@ -109,3 +119,11 @@ doi:10.1016/j.cell.2024.01.032
 
 Course project for AS.410.662 Molecular Modeling for Drug Discovery Lab,
 Johns Hopkins University.
+
+## Use of AI tools
+
+Anthropic's Claude was used as an assistive tool in the development and debugging
+of this code, in the execution and checking of the computational workflow, and in
+the preparation of figures, tables and the manuscript. The research question, the
+study design, the scientific judgements and the interpretation of the results are
+the author's own.

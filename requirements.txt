@@ -1,0 +1,28 @@
+# Pinned analysis environment for the alpha7 PAM cross-docking matrix.
+#
+# The notebook builds this itself in an isolated Python 3.12 virtual
+# environment; this file records the same pins in machine-readable form for
+# anyone reproducing the work outside Colab.
+#
+#     python -m venv .venv && . .venv/bin/activate
+#     pip install -r requirements.txt
+#
+# Vina's search is seeded and reproducible, but its scoring function and the
+# preparation tools are not version-stable across releases: an unpinned
+# environment will not reproduce these numbers.
+
+vina==1.2.7
+meeko==0.8.0
+gemmi==0.7.4
+rdkit==2025.9.4
+pdbfixer==1.12.0
+openmm==8.3.1
+numpy==1.26.4
+scipy==1.17.1
+posebusters==0.6.5
+scikit-learn==1.9.1
+matplotlib==3.11.2
+pdb2pqr==3.8.0
+propka==3.5.1
+pandas
+requests

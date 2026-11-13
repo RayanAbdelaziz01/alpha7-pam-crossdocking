@@ -104,6 +104,30 @@ requirements.txt                         pinned environment, same as the noteboo
 checkpoints, all 1,440 poses, the analysis tables, the figures and
 `ARCHIVE_MANIFEST.json`, a manifest with a SHA-256 for every entry.
 
+### How to run the scripts in `src/`
+
+The notebook is the entry point, and the scripts under `src/` are invoked by it
+rather than from a shell. Two environment variables select where a stage reads
+and writes: `ALPHA7_MATRIX_DIR` for the arm's working directory and
+`ALPHA7_DRIVE_OUT` for its output and checkpoint directory. The notebook sets
+both per arm, deliberately, so that the two arms never share a directory — a
+shared one would let the second arm overwrite the first arm's pose files.
+Running `src/matrix_runner.py` or `src/analysis.py` directly without setting
+them raises `KeyError: 'ALPHA7_DRIVE_OUT'` at import. To run a stage outside the
+notebook, set both first:
+
+```bash
+export ALPHA7_MATRIX_DIR=/tmp/alpha7_matrix
+export ALPHA7_DRIVE_OUT=/tmp/alpha7_out
+python src/matrix_runner.py
+```
+
+These three scripts are byte-identical to the copies inside
+`alpha7_artifacts.zip`, whose checksums `ARCHIVE_MANIFEST.json` records. They
+are preserved as the record of what produced the reported numbers, so they are
+left exactly as they ran rather than tidied afterwards. Verifying a copy against
+the manifest is the point of shipping both.
+
 ## Data sources
 
 Structures from the Protein Data Bank (8UTB, 8V80, 8V82, 8V88) and ligand
